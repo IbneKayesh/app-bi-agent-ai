@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Agent Chatbot</title>
+</head>
+<body>
+  <h1>Business Reports AI Agent</h1>
+  <div id="chat">
+    <div id="messages"></div>
+    <div id="suggestions">
+      <button onclick="sendSuggestion('list all items')">List All Items</button>
+      <button onclick="sendSuggestion('total sales by customer')">Total Sales by Customer</button>
+      <button onclick="sendSuggestion('sales by category')">Sales by Category</button>
+      <button onclick="sendSuggestion('average sales')">Average Sales</button>
+    </div>
+    <input type="text" id="query" placeholder="Ask a question...">
+    <button onclick="sendQuery()">Send</button>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

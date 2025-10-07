@@ -1,0 +1,50 @@
+{
+  "database": {
+    "tables": [
+      {
+        "table_name": "Item_Master",
+        "columns": [
+          "Id",
+          "Category_Name",
+          "Item_Name",
+          "Sales_Rate"
+        ]
+      },
+      {
+        "table_name": "Inventory",
+        "columns": [
+          "Id",
+          "Shop_Name",
+          "Item_Name",
+          "Stock_Qty"
+        ]
+      },
+      {
+        "table_name": "Sales",
+        "columns": [
+          "Id",
+          "Shop_Name",
+          "Sales_Date",
+          "Customer_Name",
+          "Item_Name",
+          "Sales_Qty",
+          "Sales_Rate",
+          "Sales_Amount"
+        ]
+      },
+      {
+        "table_name": "Purchase",
+        "columns": [
+          "Id",
+          "Shop_Name",
+          "Purchase_Date",
+          "Supplier_Name",
+          "Item_Name",
+          "Purchase_Qty",
+          "Purchase_Rate",
+          "Purchase_Amount"
+        ]
+      }
+    ]
+  }
+}
