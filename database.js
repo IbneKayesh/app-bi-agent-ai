@@ -1,156 +1,426 @@
-const sqlite3 = require('sqlite3').verbose();
-const fs = require('fs');
-const path = require('path');
+const sqlite3 = require("sqlite3").verbose();
+const fs = require("fs");
+const path = require("path");
 
 // Path to the database file
-const dbPath = path.join(__dirname, 'reports.db');
+const dbPath = path.join(__dirname, "reports.db");
 
-// Create database and tables
+// Remove old database file if exists (optional - for fresh start)
+if (fs.existsSync(dbPath)) {
+  fs.unlinkSync(dbPath);
+}
+
+// Create and open the database
 const db = new sqlite3.Database(dbPath);
 
 db.serialize(() => {
-  // Create Item Master table
-  db.run(`CREATE TABLE IF NOT EXISTS "Item Master" (
-    "Id" INTEGER PRIMARY KEY,
-    "Category_Name" TEXT,
-    "Item_Name" TEXT,
-    "Sales_Rate" REAL
+  // 1. Item_Master
+  db.run(`CREATE TABLE IF NOT EXISTS Item_Master (
+    Item_Id INTEGER PRIMARY KEY,
+    Category_Name TEXT,
+    Item_Name TEXT,
+    Sales_Rate REAL,
+    Purchase_Rate REAL,
+    Unit TEXT
   )`);
 
-  // Create Inventory table
-  db.run(`CREATE TABLE IF NOT EXISTS "Inventory" (
-    "Id" INTEGER PRIMARY KEY,
-    "Shop_Name" TEXT,
-    "Item_Name" TEXT,
-    "Stock_Qty" INTEGER
+  const itemStmt = db.prepare(
+    `INSERT INTO Item_Master VALUES (?, ?, ?, ?, ?, ?)`
+  );
+  const itemData = [
+    [1, "Beverage", "Coke", 20, 15, "Bottle"],
+    [2, "Snacks", "Chips", 25, 18, "Packet"],
+    [3, "Dairy", "Milk", 30, 25, "Liter"],
+    [4, "Confectionery", "Chocolate", 50, 40, "Bar"],
+    [5, "Beverage", "Juice", 35, 28, "Bottle"],
+    [6, "Snacks", "Nuts", 60, 50, "Packet"],
+    [7, "Dairy", "Cheese", 70, 55, "Block"],
+    [8, "Confectionery", "Candy", 10, 5, "Piece"],
+    [9, "Snacks", "Biscuits", 15, 10, "Packet"],
+    [10, "Dairy", "Butter", 55, 45, "Pack"],
+  ];
+  itemData.forEach((row) => itemStmt.run(row));
+  itemStmt.finalize();
+
+  // 2. Inventory
+  db.run(`CREATE TABLE IF NOT EXISTS Inventory (
+    Inventory_Id INTEGER PRIMARY KEY,
+    Shop_Name TEXT,
+    Item_Id INTEGER,
+    Item_Name TEXT,
+    Stock_Qty INTEGER,
+    Reorder_Level INTEGER,
+    Last_Updated TEXT
   )`);
 
-  // Create Sales table
-  db.run(`CREATE TABLE IF NOT EXISTS "Sales" (
-    "Id" INTEGER PRIMARY KEY,
-    "Shop_Name" TEXT,
-    "Sales_Date" TEXT,
-    "Customer_Name" TEXT,
-    "Item_Name" TEXT,
-    "Sales_Qty" INTEGER,
-    "Sales_Rate" REAL,
-    "Sales_Amount" REAL
+  const invStmt = db.prepare(
+    `INSERT INTO Inventory VALUES (?, ?, ?, ?, ?, ?, ?)`
+  );
+  const inventoryData = [
+    [1, "Main Shop", 1, "Coke", 100, 20, "2025-10-01"],
+    [2, "Main Shop", 2, "Chips", 80, 15, "2025-10-02"],
+    [3, "Main Shop", 3, "Milk", 50, 10, "2025-10-01"],
+    [4, "Main Shop", 4, "Chocolate", 40, 10, "2025-10-03"],
+    [5, "Main Shop", 5, "Juice", 70, 20, "2025-10-04"],
+    [6, "Main Shop", 6, "Nuts", 30, 10, "2025-10-02"],
+    [7, "Main Shop", 7, "Cheese", 60, 15, "2025-10-03"],
+    [8, "Main Shop", 8, "Candy", 90, 30, "2025-10-04"],
+    [9, "Main Shop", 9, "Biscuits", 120, 40, "2025-10-05"],
+    [10, "Main Shop", 10, "Butter", 45, 10, "2025-10-06"],
+  ];
+  inventoryData.forEach((row) => invStmt.run(row));
+  invStmt.finalize();
+
+  // 3. Sales
+  db.run(`CREATE TABLE IF NOT EXISTS Sales (
+    Sales_Id INTEGER PRIMARY KEY,
+    Shop_Name TEXT,
+    Sales_Date TEXT,
+    Customer_Name TEXT,
+    Item_Id INTEGER,
+    Item_Name TEXT,
+    Sales_Qty INTEGER,
+    Sales_Rate REAL,
+    Sales_Amount REAL,
+    Payment_Mode TEXT,
+    Invoice_No TEXT
   )`);
 
-  // Create Purchase table
-  db.run(`CREATE TABLE IF NOT EXISTS "Purchase" (
-    "Id" INTEGER PRIMARY KEY,
-    "Shop_Name" TEXT,
-    "Purchase_Date" TEXT,
-    "Supplier_Name" TEXT,
-    "Item_Name" TEXT,
-    "Purchase_Qty" INTEGER,
-    "Purchase_Rate" REAL,
-    "Purchase_Amount" REAL
+  const salesStmt = db.prepare(
+    `INSERT INTO Sales VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  const salesData = [
+    [
+      1,
+      "Main Shop",
+      "2025-10-01",
+      "John Doe",
+      1,
+      "Coke",
+      2,
+      20,
+      40,
+      "Cash",
+      "INV001",
+    ],
+    [
+      2,
+      "Main Shop",
+      "2025-10-02",
+      "Jane Smith",
+      2,
+      "Chips",
+      3,
+      25,
+      75,
+      "Card",
+      "INV002",
+    ],
+    [
+      3,
+      "Main Shop",
+      "2025-10-02",
+      "Alice",
+      3,
+      "Milk",
+      1,
+      30,
+      30,
+      "Cash",
+      "INV003",
+    ],
+    [
+      4,
+      "Main Shop",
+      "2025-10-03",
+      "Bob",
+      4,
+      "Chocolate",
+      2,
+      50,
+      100,
+      "Cash",
+      "INV004",
+    ],
+    [
+      5,
+      "Main Shop",
+      "2025-10-03",
+      "Carol",
+      5,
+      "Juice",
+      1,
+      35,
+      35,
+      "Card",
+      "INV005",
+    ],
+    [
+      6,
+      "Main Shop",
+      "2025-10-04",
+      "David",
+      6,
+      "Nuts",
+      1,
+      60,
+      60,
+      "UPI",
+      "INV006",
+    ],
+    [
+      7,
+      "Main Shop",
+      "2025-10-04",
+      "Eve",
+      7,
+      "Cheese",
+      2,
+      70,
+      140,
+      "Cash",
+      "INV007",
+    ],
+    [
+      8,
+      "Main Shop",
+      "2025-10-05",
+      "Frank",
+      8,
+      "Candy",
+      5,
+      10,
+      50,
+      "UPI",
+      "INV008",
+    ],
+    [
+      9,
+      "Main Shop",
+      "2025-10-05",
+      "Grace",
+      9,
+      "Biscuits",
+      3,
+      15,
+      45,
+      "Card",
+      "INV009",
+    ],
+    [
+      10,
+      "Main Shop",
+      "2025-10-06",
+      "Heidi",
+      10,
+      "Butter",
+      1,
+      55,
+      55,
+      "Cash",
+      "INV010",
+    ],
+  ];
+  salesData.forEach((row) => salesStmt.run(row));
+  salesStmt.finalize();
+
+  // 4. Purchase
+  db.run(`CREATE TABLE IF NOT EXISTS Purchase (
+    Purchase_Id INTEGER PRIMARY KEY,
+    Shop_Name TEXT,
+    Purchase_Date TEXT,
+    Supplier_Name TEXT,
+    Item_Id INTEGER,
+    Item_Name TEXT,
+    Purchase_Qty INTEGER,
+    Purchase_Rate REAL,
+    Purchase_Amount REAL,
+    Invoice_No TEXT
   )`);
 
-  console.log('Database and tables created.');
-});
+  const purchaseStmt = db.prepare(
+    `INSERT INTO Purchase VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  const purchaseData = [
+    [
+      1,
+      "Main Shop",
+      "2025-09-25",
+      "FreshBev Ltd",
+      1,
+      "Coke",
+      50,
+      15,
+      750,
+      "PINV001",
+    ],
+    [
+      2,
+      "Main Shop",
+      "2025-09-25",
+      "SnackMart",
+      2,
+      "Chips",
+      100,
+      18,
+      1800,
+      "PINV002",
+    ],
+    [
+      3,
+      "Main Shop",
+      "2025-09-26",
+      "DairyBest",
+      3,
+      "Milk",
+      60,
+      25,
+      1500,
+      "PINV003",
+    ],
+    [
+      4,
+      "Main Shop",
+      "2025-09-26",
+      "Sweet Treats",
+      4,
+      "Chocolate",
+      40,
+      40,
+      1600,
+      "PINV004",
+    ],
+    [
+      5,
+      "Main Shop",
+      "2025-09-27",
+      "FreshBev Ltd",
+      5,
+      "Juice",
+      70,
+      28,
+      1960,
+      "PINV005",
+    ],
+    [
+      6,
+      "Main Shop",
+      "2025-09-27",
+      "NuttyWorld",
+      6,
+      "Nuts",
+      30,
+      50,
+      1500,
+      "PINV006",
+    ],
+    [
+      7,
+      "Main Shop",
+      "2025-09-28",
+      "DairyBest",
+      7,
+      "Cheese",
+      60,
+      55,
+      3300,
+      "PINV007",
+    ],
+    [
+      8,
+      "Main Shop",
+      "2025-09-28",
+      "Sweet Treats",
+      8,
+      "Candy",
+      100,
+      5,
+      500,
+      "PINV008",
+    ],
+    [
+      9,
+      "Main Shop",
+      "2025-09-29",
+      "SnackMart",
+      9,
+      "Biscuits",
+      120,
+      10,
+      1200,
+      "PINV009",
+    ],
+    [
+      10,
+      "Main Shop",
+      "2025-09-29",
+      "DairyBest",
+      10,
+      "Butter",
+      45,
+      45,
+      2025,
+      "PINV010",
+    ],
+  ];
+  purchaseData.forEach((row) => purchaseStmt.run(row));
+  purchaseStmt.finalize();
 
-// Insert dummy data
-db.serialize(() => {
-  // Item Master - 20 entries
-  const stmt1 = db.prepare(`INSERT OR IGNORE INTO "Item Master" VALUES (?, ?, ?, ?)`);
-  stmt1.run(1, 'Confectionary', 'Chocolate', 50.0);
-  stmt1.run(2, 'Beverage', 'Soda', 30.0);
-  stmt1.run(3, 'Snacks', 'Biscuits', 20.0);
-  stmt1.run(4, 'Dairy', 'Milk', 40.0);
-  stmt1.run(5, 'Confectionary', 'Candy', 10.0);
-  stmt1.run(6, 'Beverage', 'Juice', 35.0);
-  stmt1.run(7, 'Snacks', 'Chips', 25.0);
-  stmt1.run(8, 'Dairy', 'Cheese', 60.0);
-  stmt1.run(9, 'Confectionary', 'Cake', 100.0);
-  stmt1.run(10, 'Beverage', 'Tea', 15.0);
-  stmt1.run(11, 'Snacks', 'Nuts', 80.0);
-  stmt1.run(12, 'Dairy', 'Yogurt', 45.0);
-  stmt1.run(13, 'Confectionary', 'Ice Cream', 70.0);
-  stmt1.run(14, 'Beverage', 'Coffee', 20.0);
-  stmt1.run(15, 'Snacks', 'Popcorn', 30.0);
-  stmt1.run(16, 'Dairy', 'Butter', 55.0);
-  stmt1.run(17, 'Confectionary', 'Cookies', 40.0);
-  stmt1.run(18, 'Beverage', 'Water', 5.0);
-  stmt1.run(19, 'Snacks', 'Crackers', 35.0);
-  stmt1.run(20, 'Dairy', 'Cream', 65.0);
-  stmt1.finalize();
+  // 5. Customer_Master
+  db.run(`CREATE TABLE IF NOT EXISTS Customer_Master (
+    Customer_Id INTEGER PRIMARY KEY,
+    Customer_Name TEXT,
+    Address TEXT,
+    Phone TEXT,
+    Email TEXT
+  )`);
 
-  // Inventory - 20 entries
-  const stmt2 = db.prepare(`INSERT OR IGNORE INTO "Inventory" VALUES (?, ?, ?, ?)`);
-  stmt2.run(1, 'Shop A', 'Chocolate', 100);
-  stmt2.run(2, 'Shop A', 'Soda', 200);
-  stmt2.run(3, 'Shop A', 'Biscuits', 150);
-  stmt2.run(4, 'Shop A', 'Milk', 80);
-  stmt2.run(5, 'Shop A', 'Candy', 300);
-  stmt2.run(6, 'Shop A', 'Juice', 120);
-  stmt2.run(7, 'Shop A', 'Chips', 90);
-  stmt2.run(8, 'Shop A', 'Cheese', 50);
-  stmt2.run(9, 'Shop B', 'Chocolate', 75);
-  stmt2.run(10, 'Shop B', 'Soda', 180);
-  stmt2.run(11, 'Shop B', 'Biscuits', 200);
-  stmt2.run(12, 'Shop B', 'Milk', 60);
-  stmt2.run(13, 'Shop C', 'Cake', 40);
-  stmt2.run(14, 'Shop C', 'Tea', 250);
-  stmt2.run(15, 'Shop C', 'Nuts', 110);
-  stmt2.run(16, 'Shop C', 'Yogurt', 90);
-  stmt2.run(17, 'Shop D', 'Ice Cream', 30);
-  stmt2.run(18, 'Shop D', 'Coffee', 160);
-  stmt2.run(19, 'Shop D', 'Popcorn', 140);
-  stmt2.run(20, 'Shop D', 'Butter', 70);
-  stmt2.finalize();
+  const custStmt = db.prepare(
+    `INSERT INTO Customer_Master VALUES (?, ?, ?, ?, ?)`
+  );
+  const customers = [
+    [1, "John Doe", "123 Market St", "9876543210", "john@example.com"],
+    [2, "Jane Smith", "456 Lake Rd", "9876543211", "jane@example.com"],
+    [3, "Alice", "789 Hill St", "9876543212", "alice@example.com"],
+    [4, "Bob", "321 River Ln", "9876543213", "bob@example.com"],
+    [5, "Carol", "654 Park Ave", "9876543214", "carol@example.com"],
+    [6, "David", "987 Forest Dr", "9876543215", "david@example.com"],
+    [7, "Eve", "246 Beach Blvd", "9876543216", "eve@example.com"],
+    [8, "Frank", "135 Sunset Blvd", "9876543217", "frank@example.com"],
+    [9, "Grace", "864 Sunrise Rd", "9876543218", "grace@example.com"],
+    [10, "Heidi", "975 Moonlight Ln", "9876543219", "heidi@example.com"],
+  ];
+  customers.forEach((row) => custStmt.run(row));
+  custStmt.finalize();
 
-  // Sales - 20 entries
-  const stmt3 = db.prepare(`INSERT OR IGNORE INTO "Sales" VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
-  stmt3.run(1, 'Shop A', '2023-10-01', 'John Doe', 'Chocolate', 5, 50.0, 250.0);
-  stmt3.run(2, 'Shop A', '2023-10-02', 'Jane Smith', 'Soda', 10, 30.0, 300.0);
-  stmt3.run(3, 'Shop A', '2023-10-03', 'Alice Johnson', 'Biscuits', 8, 20.0, 160.0);
-  stmt3.run(4, 'Shop A', '2023-10-04', 'Bob Brown', 'Milk', 3, 40.0, 120.0);
-  stmt3.run(5, 'Shop A', '2023-10-05', 'Charlie Davis', 'Candy', 15, 10.0, 150.0);
-  stmt3.run(6, 'Shop B', '2023-10-01', 'Diana Evans', 'Chocolate', 4, 50.0, 200.0);
-  stmt3.run(7, 'Shop B', '2023-10-02', 'Eve Foster', 'Juice', 6, 35.0, 210.0);
-  stmt3.run(8, 'Shop B', '2023-10-03', 'Frank Garcia', 'Chips', 12, 25.0, 300.0);
-  stmt3.run(9, 'Shop C', '2023-10-06', 'Grace Hill', 'Cake', 2, 100.0, 200.0);
-  stmt3.run(10, 'Shop C', '2023-10-07', 'Henry Ingram', 'Tea', 20, 15.0, 300.0);
-  stmt3.run(11, 'Shop C', '2023-10-08', 'Ivy Jones', 'Nuts', 5, 80.0, 400.0);
-  stmt3.run(12, 'Shop C', '2023-10-09', 'Jack King', 'Yogurt', 7, 45.0, 315.0);
-  stmt3.run(13, 'Shop D', '2023-10-10', 'Kate Lee', 'Ice Cream', 3, 70.0, 210.0);
-  stmt3.run(14, 'Shop D', '2023-10-11', 'Liam Miller', 'Coffee', 10, 20.0, 200.0);
-  stmt3.run(15, 'Shop D', '2023-10-12', 'Mia Nelson', 'Popcorn', 8, 30.0, 240.0);
-  stmt3.run(16, 'Shop D', '2023-10-13', 'Noah Owen', 'Butter', 4, 55.0, 220.0);
-  stmt3.run(17, 'Shop A', '2023-10-14', 'Olivia Parker', 'Cookies', 6, 40.0, 240.0);
-  stmt3.run(18, 'Shop B', '2023-10-15', 'Quinn Reed', 'Water', 12, 5.0, 60.0);
-  stmt3.run(19, 'Shop C', '2023-10-16', 'Ryan Scott', 'Crackers', 9, 35.0, 315.0);
-  stmt3.run(20, 'Shop D', '2023-10-17', 'Sophia Taylor', 'Cream', 2, 65.0, 130.0);
-  stmt3.finalize();
+  // 6. Supplier_Master
+  db.run(`CREATE TABLE IF NOT EXISTS Supplier_Master (
+    Supplier_Id INTEGER PRIMARY KEY,
+    Supplier_Name TEXT,
+    Contact_Person TEXT,
+    Phone TEXT,
+    Email TEXT
+  )`);
 
-  // Purchase - 20 entries
-  const stmt4 = db.prepare(`INSERT OR IGNORE INTO "Purchase" VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
-  stmt4.run(1, 'Shop A', '2023-09-01', 'Supplier X', 'Chocolate', 50, 40.0, 2000.0);
-  stmt4.run(2, 'Shop A', '2023-09-02', 'Supplier Y', 'Soda', 100, 25.0, 2500.0);
-  stmt4.run(3, 'Shop A', '2023-09-03', 'Supplier Z', 'Biscuits', 200, 15.0, 3000.0);
-  stmt4.run(4, 'Shop A', '2023-09-04', 'Supplier X', 'Milk', 80, 30.0, 2400.0);
-  stmt4.run(5, 'Shop B', '2023-09-01', 'Supplier W', 'Juice', 150, 28.0, 4200.0);
-  stmt4.run(6, 'Shop B', '2023-09-02', 'Supplier V', 'Chips', 100, 20.0, 2000.0);
-  stmt4.run(7, 'Shop B', '2023-09-03', 'Supplier U', 'Cheese', 40, 50.0, 2000.0);
-  stmt4.run(8, 'Shop C', '2023-09-05', 'Supplier T', 'Cake', 60, 80.0, 4800.0);
-  stmt4.run(9, 'Shop C', '2023-09-06', 'Supplier S', 'Tea', 300, 12.0, 3600.0);
-  stmt4.run(10, 'Shop C', '2023-09-07', 'Supplier R', 'Nuts', 120, 70.0, 8400.0);
-  stmt4.run(11, 'Shop C', '2023-09-08', 'Supplier Q', 'Yogurt', 100, 35.0, 3500.0);
-  stmt4.run(12, 'Shop D', '2023-09-09', 'Supplier P', 'Ice Cream', 50, 60.0, 3000.0);
-  stmt4.run(13, 'Shop D', '2023-09-10', 'Supplier O', 'Coffee', 200, 18.0, 3600.0);
-  stmt4.run(14, 'Shop D', '2023-09-11', 'Supplier N', 'Popcorn', 180, 25.0, 4500.0);
-  stmt4.run(15, 'Shop D', '2023-09-12', 'Supplier M', 'Butter', 90, 45.0, 4050.0);
-  stmt4.run(16, 'Shop A', '2023-09-13', 'Supplier L', 'Cookies', 70, 30.0, 2100.0);
-  stmt4.run(17, 'Shop B', '2023-09-14', 'Supplier K', 'Water', 400, 4.0, 1600.0);
-  stmt4.run(18, 'Shop C', '2023-09-15', 'Supplier J', 'Crackers', 150, 28.0, 4200.0);
-  stmt4.run(19, 'Shop D', '2023-09-16', 'Supplier I', 'Cream', 60, 55.0, 3300.0);
-  stmt4.run(20, 'Shop A', '2023-09-17', 'Supplier H', 'Candy', 250, 8.0, 2000.0);
-  stmt4.finalize();
+  const supplierStmt = db.prepare(
+    `INSERT INTO Supplier_Master VALUES (?, ?, ?, ?, ?)`
+  );
+  const suppliers = [
+    [1, "FreshBev Ltd", "Tom", "9123456780", "contact@freshbev.com"],
+    [2, "SnackMart", "Jerry", "9123456781", "sales@snackmart.com"],
+    [3, "DairyBest", "Alice", "9123456782", "info@dairybest.com"],
+    [4, "Sweet Treats", "Bob", "9123456783", "orders@sweettreats.com"],
+    [5, "NuttyWorld", "Carol", "9123456784", "service@nuttyworld.com"],
+    [6, "ChocoHeaven", "Eve", "9123456785", "contact@chocoheaven.com"],
+    [7, "JuiceJoy", "Frank", "9123456786", "sales@juicejoy.com"],
+    [8, "CoolDairy", "Grace", "9123456787", "cool@dairy.com"],
+    [9, "QuickSuppliers", "Heidi", "9123456788", "support@quicksup.com"],
+    [10, "MegaVendors", "Ivan", "9123456789", "hello@megavendors.com"],
+  ];
+  suppliers.forEach((row) => supplierStmt.run(row));
+  supplierStmt.finalize();
 
-  console.log('Dummy data inserted.');
+  console.log("Database created and dummy data inserted.");
 });
 
 db.close();

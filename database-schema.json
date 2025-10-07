@@ -1,49 +1,122 @@
 {
   "database": {
+    "name": "Shop_Management",
+    "description": "Database for managing shop transactions including inventory, sales, and purchases.",
     "tables": [
       {
         "table_name": "Item_Master",
         "columns": [
-          "Id",
+          "Item_Id",
           "Category_Name",
           "Item_Name",
-          "Sales_Rate"
-        ]
+          "Sales_Rate",
+          "Purchase_Rate",
+          "Unit"
+        ],
+        "hints": {
+          "purpose": "Stores master information of each item in the shop.",
+          "synonyms": {
+            "Item_Name": ["product", "goods", "article", "item"],
+            "Category_Name": ["group", "type", "classification"],
+            "Sales_Rate": ["price", "selling_price", "retail_rate"]
+          }
+        }
       },
       {
         "table_name": "Inventory",
         "columns": [
-          "Id",
+          "Inventory_Id",
           "Shop_Name",
+          "Item_Id",
           "Item_Name",
-          "Stock_Qty"
-        ]
+          "Stock_Qty",
+          "Reorder_Level",
+          "Last_Updated"
+        ],
+        "hints": {
+          "purpose": "Tracks available stock for each item in every shop location.",
+          "synonyms": {
+            "Stock_Qty": ["quantity", "available_stock", "balance_qty"]
+          }
+        }
       },
       {
         "table_name": "Sales",
         "columns": [
-          "Id",
+          "Sales_Id",
           "Shop_Name",
           "Sales_Date",
           "Customer_Name",
+          "Item_Id",
           "Item_Name",
           "Sales_Qty",
           "Sales_Rate",
-          "Sales_Amount"
-        ]
+          "Sales_Amount",
+          "Payment_Mode",
+          "Invoice_No"
+        ],
+        "hints": {
+          "purpose": "Records all sales transactions with customer details and amount.",
+          "synonyms": {
+            "Sales_Amount": ["amount", "revenue", "total", "invoice_amount"],
+            "Sales_Date": ["date", "transaction_date"],
+            "Customer_Name": ["client", "buyer", "customer"]
+          }
+        }
       },
       {
         "table_name": "Purchase",
         "columns": [
-          "Id",
+          "Purchase_Id",
           "Shop_Name",
           "Purchase_Date",
           "Supplier_Name",
+          "Item_Id",
           "Item_Name",
           "Purchase_Qty",
           "Purchase_Rate",
-          "Purchase_Amount"
-        ]
+          "Purchase_Amount",
+          "Invoice_No"
+        ],
+        "hints": {
+          "purpose": "Stores supplier purchase data and amounts spent.",
+          "synonyms": {
+            "Purchase_Amount": ["amount", "expense", "cost", "total_cost"],
+            "Supplier_Name": ["vendor", "provider", "seller"]
+          }
+        }
+      },
+      {
+        "table_name": "Customer_Master",
+        "columns": [
+          "Customer_Id",
+          "Customer_Name",
+          "Address",
+          "Phone",
+          "Email"
+        ],
+        "hints": {
+          "purpose": "Contains customer contact details and unique IDs.",
+          "synonyms": {
+            "Customer_Name": ["client", "buyer", "consumer", "customer"]
+          }
+        }
+      },
+      {
+        "table_name": "Supplier_Master",
+        "columns": [
+          "Supplier_Id",
+          "Supplier_Name",
+          "Contact_Person",
+          "Phone",
+          "Email"
+        ],
+        "hints": {
+          "purpose": "Contains supplier details used for purchases.",
+          "synonyms": {
+            "Supplier_Name": ["vendor", "provider", "merchant", "supplier"]
+          }
+        }
       }
     ]
   }

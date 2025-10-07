@@ -1,0 +1,104 @@
+{
+  "database": {
+    "name": "HR_Management",
+    "description": "Database for managing employees, departments, attendance, and payroll.",
+    "tables": [
+      {
+        "table_name": "Department",
+        "columns": [
+          "Department_Id",
+          "Department_Name",
+          "Manager_Id",
+          "Location"
+        ],
+        "hints": {
+          "purpose": "Stores department details and respective managers.",
+          "synonyms": {
+            "Department_Name": ["division", "team", "unit"]
+          }
+        }
+      },
+      {
+        "table_name": "Employee",
+        "columns": [
+          "Employee_Id",
+          "Employee_Name",
+          "Gender",
+          "Date_of_Birth",
+          "Joining_Date",
+          "Department_Id",
+          "Designation",
+          "Salary",
+          "Email",
+          "Phone"
+        ],
+        "hints": {
+          "purpose": "Stores basic employee information including department and salary.",
+          "synonyms": {
+            "Employee_Name": ["staff", "personnel", "worker"],
+            "Salary": ["wage", "pay", "income", "compensation"],
+            "Joining_Date": ["hire_date", "employment_date"]
+          }
+        }
+      },
+      {
+        "table_name": "Attendance",
+        "columns": [
+          "Attendance_Id",
+          "Employee_Id",
+          "Attendance_Date",
+          "Status",
+          "Check_In_Time",
+          "Check_Out_Time"
+        ],
+        "hints": {
+          "purpose": "Tracks employee daily attendance records.",
+          "synonyms": {
+            "Attendance_Date": ["date"],
+            "Status": ["present", "absent", "leave"]
+          }
+        }
+      },
+      {
+        "table_name": "Leave_Record",
+        "columns": [
+          "Leave_Id",
+          "Employee_Id",
+          "Leave_Type",
+          "Start_Date",
+          "End_Date",
+          "Status",
+          "Reason"
+        ],
+        "hints": {
+          "purpose": "Tracks employee leave requests and approvals.",
+          "synonyms": {
+            "Leave_Type": ["vacation", "sick_leave", "annual_leave"]
+          }
+        }
+      },
+      {
+        "table_name": "Payroll",
+        "columns": [
+          "Payroll_Id",
+          "Employee_Id",
+          "Month",
+          "Year",
+          "Basic_Salary",
+          "Bonus",
+          "Deductions",
+          "Net_Salary",
+          "Payment_Date"
+        ],
+        "hints": {
+          "purpose": "Stores payroll calculations per employee per month.",
+          "synonyms": {
+            "Net_Salary": ["take_home", "final_pay", "total_salary"],
+            "Bonus": ["incentive", "reward"],
+            "Deductions": ["tax", "penalty", "cut"]
+          }
+        }
+      }
+    ]
+  }
+}
