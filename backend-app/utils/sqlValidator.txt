@@ -1,0 +1,25 @@
+Example Usage:
+import { validateSQL } from "./utils/sqlValidator.js";
+
+const sql = `
+  SELECT Item_Name, SUM(Item_Qty * Item_Rate) AS Total_Sales
+  FROM Table_Sales
+  WHERE Item_Name = @itemName
+  GROUP BY Item_Name
+`;
+
+try {
+  const safeSQL = validateSQL(sql);
+  console.log("Validated SQL:\n", safeSQL);
+} catch (err) {
+  console.error("SQL validation error:", err.message);
+}
+
+
+
+Output Example:
+SELECT Item_Name, SUM(Item_Qty * Item_Rate) AS Total_Sales
+FROM Table_Sales
+WHERE Item_Name = @itemName
+GROUP BY Item_Name
+LIMIT 1000

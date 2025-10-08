@@ -1,0 +1,27 @@
+Example Usage:
+import { extractEntities } from "./nluEngine.js";
+import { generateSQL, executeSQL } from "./sqlTemplateEngine.js";
+
+const query = "Show total sales of Pine Apple Biscuit";
+const entities = extractEntities(query);
+
+const { sql, params } = generateSQL("itemWiseSales", entities);
+
+console.log("Generated SQL:", sql);
+console.log("Parameters:", params);
+
+const result = executeSQL(sql, params);
+console.log("Query Result:", result);
+
+
+Output Example:
+Generated SQL:
+SELECT Item_Name, SUM(Item_Qty * Item_Rate) AS Total_Sales
+FROM Table_Sales
+WHERE Item_Name = @itemName
+GROUP BY Item_Name;
+
+Parameters: { '@itemName': 'pine apple biscuit' }
+
+Query Result:
+[ { Item_Name: 'Pine Apple Biscuit', Total_Sales: 310 } ]
