@@ -1,20 +1,11 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
-import ChatWindow from "./ChatWindow";
+import "primereact/resources/themes/saga-blue/theme.css";
+import "primereact/resources/primereact.min.css";
+import "primeicons/primeicons.css";
+import "primeflex/primeflex.css";
+import ChatboxPage from "./pages/ChatboxPage";
 
-function App() {
-  const [count, setCount] = useState(0);
+//intenal imports
 
-  return (
-    <>
-      <div>
-        <h2 className="p-text-center p-mt-3">SQL Agent Chat</h2>
-        <ChatWindow />
-      </div>
-    </>
-  );
+export default function App() {
+  return <ChatboxPage />;
 }
-
-export default App;
